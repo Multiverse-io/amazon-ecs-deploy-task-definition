@@ -1116,6 +1116,16 @@ describe('Deploy to ECS', () => {
         expect(core.setFailed).toBeCalledWith('hello is MISSING');
     });
 
+    test('deeply nested task definition YAML fails with a parser error', async () => {
+        const nestedYaml = '['.repeat(5000) + '1' + ']'.repeat(5000);
+        fs.readFileSync.mockReturnValueOnce(nestedYaml);
+
+        await run();
+
+        expect(mockEcsRegisterTaskDef).not.toHaveBeenCalled();
+        expect(core.debug).toHaveBeenCalledWith(expect.stringMatching(/^YAMLParseError:/));
+    });
+
     test('error is caught if service is inactive', async () => {
         mockEcsDescribeServices.mockImplementation(() => {
             return {
